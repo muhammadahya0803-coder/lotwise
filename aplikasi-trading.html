@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1017">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lotwise">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <title>Lotwise — Kalkulator Position Size</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1017;
+      --panel: #111923;
+      --panel-raised: #151f2a;
+      --border: #25313d;
+      --muted: #8d9bab;
+      --text: #edf3f8;
+      --green: #33d69f;
+      --green-soft: rgba(51, 214, 159, .12);
+      --red: #ff6b73;
+      --red-soft: rgba(255, 107, 115, .12);
+      --blue: #83b9ff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 82% -12%, rgba(32, 94, 78, .18), transparent 36rem),
+        var(--bg);
+      color: var(--text);
+      font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input { font: inherit; }
+    .shell { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 32px 0 42px; }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 42px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 11px; font-size: 17px; font-weight: 750; letter-spacing: -.03em; }
+    .brand-mark {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border: 1px solid rgba(51, 214, 159, .28);
+      border-radius: 11px;
+      background: var(--green-soft);
+      color: var(--green);
+    }
+    .brand-mark svg { width: 19px; height: 19px; }
+    .market-tag { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .market-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px rgba(51, 214, 159, .55); }
+
+    .intro { margin-bottom: 26px; }
+    .eyebrow { margin: 0 0 9px; color: var(--green); font-size: 11px; font-weight: 750; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(26px, 4vw, 36px); letter-spacing: -.045em; line-height: 1.15; }
+    .subtitle { max-width: 620px; margin: 11px 0 0; color: var(--muted); font-size: 14px; }
+
+    .layout { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: 20px; align-items: start; }
+    .panel { border: 1px solid var(--border); border-radius: 18px; background: rgba(17, 25, 35, .92); box-shadow: 0 16px 50px rgba(0, 0, 0, .12); }
+    .form-panel { padding: 24px; }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
+    .section-heading h2 { margin: 0; font-size: 15px; font-weight: 700; }
+    .section-heading span { color: var(--muted); font-size: 11px; }
+
+    .field { margin-bottom: 17px; }
+    .label-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+    label { color: #c6d0dc; font-size: 12px; font-weight: 600; }
+    .optional { color: #78889a; font-size: 10px; font-weight: 500; }
+    .input-wrap { position: relative; }
+    .currency {
+      position: absolute;
+      top: 50%;
+      left: 13px;
+      transform: translateY(-50%);
+      color: #8797a8;
+      font-size: 12px;
+      font-weight: 650;
+      pointer-events: none;
+    }
+    input[type="text"] {
+      width: 100%;
+      height: 47px;
+      padding: 0 14px 0 43px;
+      border: 1px solid #2a3744;
+      border-radius: 10px;
+      outline: 0;
+      background: #0d141c;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      transition: border-color .16s, box-shadow .16s;
+    }
+    input[type="text"]:focus { border-color: rgba(51, 214, 159, .7); box-shadow: 0 0 0 3px rgba(51, 214, 159, .09); }
+    input::placeholder { color: #596777; font-weight: 450; }
+    .field-hint { margin: 6px 1px 0; color: #748395; font-size: 10px; }
+    .field-hint.error { color: var(--red); }
+
+    .fee-box { margin-top: 21px; padding: 15px; border: 1px solid var(--border); border-radius: 12px; background: rgba(10, 15, 21, .5); }
+    .fee-toggle { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; }
+    .fee-title { color: #dce5ed; font-size: 12px; font-weight: 650; }
+    .fee-caption { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 450; }
+    .switch { position: relative; width: 38px; height: 22px; flex: 0 0 auto; }
+    .switch input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .switch-track { position: absolute; inset: 0; border-radius: 20px; background: #35414d; transition: background .2s; }
+    .switch-track::after { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; content: ""; transition: transform .2s; }
+    .switch input:checked + .switch-track { background: #168d68; }
+    .switch input:checked + .switch-track::after { transform: translateX(16px); }
+    .switch input:focus-visible + .switch-track { outline: 2px solid var(--green); outline-offset: 3px; }
+    .fee-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+    .fee-fields[hidden] { display: none; }
+    .fee-fields .field { margin: 0; }
+    .fee-fields label { font-size: 10px; }
+    .percent-wrap { position: relative; }
+    .percent-wrap input { height: 40px; padding: 0 35px 0 11px; font-size: 12px; }
+    .percent-sign { position: absolute; top: 50%; right: 12px; transform: translateY(-50%); color: var(--muted); font-size: 12px; pointer-events: none; }
+
+    .reset-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 37px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: transparent;
+      color: #b7c3d0;
+      font-size: 11px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .reset-button:hover { border-color: #435363; background: rgba(255, 255, 255, .035); }
+    .reset-button svg { width: 14px; height: 14px; }
+
+    .results-panel { overflow: hidden; }
+    .result-hero { position: relative; padding: 26px 26px 24px; border-bottom: 1px solid var(--border); background: linear-gradient(130deg, rgba(30, 106, 80, .2), rgba(17, 25, 35, .15) 70%); }
+    .result-hero::after { position: absolute; top: -72px; right: -40px; width: 210px; height: 210px; border: 1px solid rgba(51, 214, 159, .09); border-radius: 50%; content: ""; pointer-events: none; }
+    .result-label { margin: 0; color: #9eacba; font-size: 12px; font-weight: 600; }
+    .lot-output { display: flex; align-items: baseline; gap: 9px; margin-top: 2px; color: var(--green); font-size: clamp(58px, 8vw, 76px); font-weight: 780; letter-spacing: -.075em; line-height: 1.15; }
+    .lot-output small { color: #b0c1c5; font-size: 18px; font-weight: 600; letter-spacing: -.02em; }
+    .hero-note { display: flex; align-items: center; gap: 7px; margin-top: 12px; color: #a4b2bf; font-size: 11px; }
+    .hero-note svg { width: 14px; height: 14px; color: var(--green); }
+    .hero-note.warning { color: #ffd1d3; }
+    .hero-note.warning svg { color: var(--red); }
+
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+    .metric { min-height: 97px; padding: 17px 19px; background: var(--panel); }
+    .metric-name { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 10px; font-weight: 550; }
+    .metric-value { margin-top: 8px; color: #e8eff5; font-size: 17px; font-weight: 700; letter-spacing: -.025em; overflow-wrap: anywhere; }
+    .metric-value.negative { color: var(--red); }
+    .metric-value.positive { color: var(--green); }
+    .metric-sub { margin-top: 3px; color: #8290a0; font-size: 10px; }
+    .ratio-box { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 17px; padding: 14px 15px; border: 1px solid rgba(51, 214, 159, .17); border-radius: 11px; background: rgba(51, 214, 159, .055); }
+    .ratio-label { color: #b7c5cf; font-size: 11px; font-weight: 600; }
+    .ratio-help { display: block; margin-top: 3px; color: #829294; font-size: 9px; font-weight: 450; }
+    .ratio-value { color: var(--green); font-size: 19px; font-weight: 750; white-space: nowrap; }
+
+    .invalid-state { display: none; margin: 0 17px 17px; padding: 11px 12px; border: 1px solid rgba(255, 107, 115, .24); border-radius: 9px; background: var(--red-soft); color: #ffb6ba; font-size: 11px; }
+    .invalid-state.visible { display: block; }
+    .formula-note { padding: 14px 18px 17px; border-top: 1px solid var(--border); color: #7f8e9e; font-size: 10px; line-height: 1.65; }
+    .formula-note strong { color: #abb9c5; font-weight: 600; }
+    .footnote { margin: 20px 2px 0; color: #687889; font-size: 10px; line-height: 1.6; }
+
+    @media (max-width: 760px) {
+      .shell { width: min(100% - 28px, 560px); padding-top: 21px; }
+      .topbar { margin-bottom: 31px; }
+      .layout { grid-template-columns: 1fr; gap: 15px; }
+      .form-panel { padding: 20px; }
+      .result-hero { padding: 23px 22px 21px; }
+      .lot-output { font-size: 66px; }
+      .metric { min-height: 88px; padding: 15px; }
+    }
+    @media (max-width: 380px) {
+      .market-tag { font-size: 10px; }
+      .metrics { grid-template-columns: 1fr; }
+      .metric { min-height: 75px; }
+      .metric-value { margin-top: 4px; }
+      .fee-fields { gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 17.5 9.2 12l3.3 3.2L20 7.5M14.8 7.5H20v5.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span>lotwise</span>
+      </div>
+      <div class="market-tag"><span class="market-dot"></span> KALKULATOR SAHAM IDX</div>
+    </header>
+
+    <section class="intro">
+      <p class="eyebrow">Risk management, made simple</p>
+      <h1>Hitung posisi trading-mu.</h1>
+      <p class="subtitle">Tentukan ukuran posisi yang sesuai dengan batas risiko. Hasil diperbarui otomatis setiap kali angka diubah.</p>
+    </section>
+
+    <div class="layout">
+      <section class="panel form-panel" aria-labelledby="input-title">
+        <div class="section-heading">
+          <h2 id="input-title">Parameter transaksi</h2>
+          <button class="reset-button" id="reset" type="button" aria-label="Reset semua input">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4.2 9a6 6 0 1 1 .8 4.8M4 4.5v4.7h4.7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Reset
+          </button>
+        </div>
+
+        <div class="field">
+          <div class="label-row"><label for="entry">Harga entry</label></div>
+          <div class="input-wrap"><span class="currency">Rp</span><input id="entry" type="text" inputmode="numeric" autocomplete="off" placeholder="Contoh: 200.000" value="200" aria-describedby="entry-hint"></div>
+          <p class="field-hint" id="entry-hint">Harga beli per lembar saham.</p>
+        </div>
+
+        <div class="field">
+          <div class="label-row"><label for="stop">Harga stop loss</label></div>
+          <div class="input-wrap"><span class="currency">Rp</span><input id="stop" type="text" inputmode="numeric" autocomplete="off" placeholder="Contoh: 190.000" value="100" aria-describedby="stop-hint"></div>
+          <p class="field-hint" id="stop-hint">Harus lebih rendah dari harga entry.</p>
+        </div>
+
+        <div class="field">
+          <div class="label-row"><label for="risk">Nominal risiko</label></div>
+          <div class="input-wrap"><span class="currency">Rp</span><input id="risk" type="text" inputmode="numeric" autocomplete="off" placeholder="Contoh: 200.000" value="200000" aria-describedby="risk-hint"></div>
+          <p class="field-hint" id="risk-hint">Batas maksimal kerugian yang kamu tentukan.</p>
+        </div>
+
+        <div class="field">
+          <div class="label-row"><label for="target">Target profit <span class="optional">(opsional)</span></label></div>
+          <div class="input-wrap"><span class="currency">Rp</span><input id="target" type="text" inputmode="numeric" autocomplete="off" placeholder="Isi untuk menghitung risk/reward"></div>
+        </div>
+
+        <div class="fee-box">
+          <label class="fee-toggle" for="fees-enabled">
+            <span class="fee-title">Sertakan biaya broker<span class="fee-caption">Diperhitungkan dalam ukuran posisi & estimasi hasil.</span></span>
+            <span class="switch"><input id="fees-enabled" type="checkbox" aria-label="Sertakan biaya broker"><span class="switch-track"></span></span>
+          </label>
+          <div class="fee-fields" id="fee-fields" hidden>
+            <div class="field">
+              <div class="label-row"><label for="buy-fee">Biaya beli</label></div>
+              <div class="percent-wrap"><input id="buy-fee" type="text" inputmode="decimal" value="0,15" aria-label="Biaya broker beli dalam persen"><span class="percent-sign">%</span></div>
+            </div>
+            <div class="field">
+              <div class="label-row"><label for="sell-fee">Biaya jual</label></div>
+              <div class="percent-wrap"><input id="sell-fee" type="text" inputmode="decimal" value="0,25" aria-label="Biaya broker jual dalam persen"><span class="percent-sign">%</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel results-panel" aria-labelledby="result-title" aria-live="polite">
+        <div class="result-hero">
+          <p class="result-label" id="result-title">Ukuran posisi yang disarankan</p>
+          <div class="lot-output"><span id="lots">20</span><small>lot</small></div>
+          <div class="hero-note" id="hero-note">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m5 10 3.2 3.2L15.5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="lot-note">Posisi sesuai dengan batas risiko kamu.</span>
+          </div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-name">Total saham</div>
+            <div class="metric-value" id="shares">2.000 lembar</div>
+            <div class="metric-sub">100 saham per lot</div>
+          </div>
+          <div class="metric">
+            <div class="metric-name">Estimasi modal</div>
+            <div class="metric-value" id="capital">Rp400.000</div>
+            <div class="metric-sub" id="capital-sub">Belum termasuk biaya beli</div>
+          </div>
+          <div class="metric">
+            <div class="metric-name">Estimasi kerugian</div>
+            <div class="metric-value negative" id="loss">−Rp200.000</div>
+            <div class="metric-sub" id="loss-sub">Termasuk risiko harga stop loss</div>
+          </div>
+          <div class="metric">
+            <div class="metric-name">Estimasi stop loss tanpa biaya broker</div>
+            <div class="metric-value" id="risk-percent">50,00%</div>
+            <div class="metric-sub">Persentase dari modal transaksi</div>
+          </div>
+          <div class="metric" id="broker-risk-metric" hidden>
+            <div class="metric-name">Estimasi stop loss dengan biaya broker</div>
+            <div class="metric-value" id="broker-risk-percent">—</div>
+            <div class="metric-sub">Persentase dari modal termasuk biaya beli</div>
+          </div>
+          <div class="metric">
+            <div class="metric-name">Estimasi keuntungan tanpa biaya broker</div>
+            <div class="metric-value positive" id="profit">—</div>
+            <div class="metric-sub" id="profit-sub">Isi target profit untuk melihat estimasi.</div>
+          </div>
+          <div class="metric" id="broker-profit-metric" hidden>
+            <div class="metric-name">Estimasi keuntungan dengan biaya broker</div>
+            <div class="metric-value positive" id="broker-profit">—</div>
+            <div class="metric-sub">Setelah estimasi biaya beli & jual</div>
+          </div>
+        </div>
+
+        <div class="ratio-box">
+          <div class="ratio-label">Risk : Reward Ratio<span class="ratio-help" id="ratio-help">Isi harga target untuk melihat rasio.</span></div>
+          <div class="ratio-value" id="ratio">—</div>
+        </div>
+        <div class="invalid-state" id="invalid-state" role="status"></div>
+        <div class="formula-note">
+          <strong>Perhitungan:</strong> lot dibulatkan ke bawah agar estimasi kerugian tidak melebihi batas risiko. Satu lot = 100 lembar saham.
+        </div>
+      </section>
+    </div>
+
+    <p class="footnote">Kalkulator ini hanya alat bantu estimasi, bukan rekomendasi investasi. Biaya broker aktual berbeda di setiap sekuritas. Perhitungan belum mencakup pajak dan slippage.</p>
+  </main>
+
+  <script>
+    (() => {
+      const $ = (id) => document.getElementById(id);
+      const moneyInputs = ["entry", "stop", "risk", "target"].map($);
+      const feeInputs = ["buy-fee", "sell-fee"].map($);
+      const numberFormat = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 });
+      const decimalFormat = new Intl.NumberFormat("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      function parseMoney(value) {
+        const digits = value.replace(/\D/g, "");
+        return digits ? Number(digits) : 0;
+      }
+
+      function parsePercent(value) {
+        const normalized = value.trim().replace(/\s/g, "").replace(",", ".");
+        if (!normalized) return 0;
+        const parsed = Number(normalized);
+        return Number.isFinite(parsed) && parsed >= 0 ? parsed / 100 : NaN;
+      }
+
+      function rupiah(value) {
+        return "Rp" + numberFormat.format(Math.round(value));
+      }
+
+      function signedRupiah(value) {
+        return value < 0 ? "−" + rupiah(Math.abs(value)) : rupiah(value);
+      }
+
+      function setText(id, value) {
+        $(id).textContent = value;
+      }
+
+      function showInvalid(message) {
+        $("invalid-state").textContent = message;
+        $("invalid-state").classList.add("visible");
+        $("hero-note").classList.add("warning");
+        $("lot-note").textContent = "Periksa kembali parameter transaksi.";
+        $("lots").textContent = "—";
+        setText("shares", "—");
+        setText("capital", "—");
+        setText("capital-sub", "Menunggu input yang valid");
+        setText("loss", "—");
+        setText("loss-sub", "Menunggu input yang valid");
+        setText("risk-percent", "—");
+        setText("broker-risk-percent", "—");
+        setText("profit", "—");
+        setText("profit-sub", "Isi target profit untuk melihat estimasi.");
+        setText("broker-profit", "—");
+        setText("ratio", "—");
+        setText("ratio-help", "Perbaiki input untuk melihat hasil.");
+      }
+
+      function calculate() {
+        const entry = parseMoney($("entry").value);
+        const stop = parseMoney($("stop").value);
+        const riskBudget = parseMoney($("risk").value);
+        const target = parseMoney($("target").value);
+        const feesEnabled = $("fees-enabled").checked;
+        const buyRate = feesEnabled ? parsePercent($("buy-fee").value) : 0;
+        const sellRate = feesEnabled ? parsePercent($("sell-fee").value) : 0;
+
+        if (feesEnabled && (!Number.isFinite(buyRate) || !Number.isFinite(sellRate))) {
+          showInvalid("Persentase biaya broker harus berupa angka nol atau lebih.");
+          return;
+        }
+        if (!entry || !stop || !riskBudget) {
+          showInvalid("Isi harga entry, stop loss, dan nominal risiko dengan angka lebih dari nol.");
+          return;
+        }
+        if (stop >= entry) {
+          showInvalid("Harga stop loss harus lebih rendah dari harga entry untuk posisi BUY.");
+          return;
+        }
+        if (target && target <= entry) {
+          showInvalid("Harga target profit harus lebih tinggi dari harga entry.");
+          return;
+        }
+
+        const lossPerShare = entry - stop;
+        const riskPerShare = lossPerShare + entry * buyRate + stop * sellRate;
+        const riskPerLot = riskPerShare * 100;
+        const lots = Math.floor(riskBudget / riskPerLot);
+        const shares = lots * 100;
+        const capital = shares * entry;
+        const loss = shares * riskPerShare;
+        const capitalWithBuyFee = capital * (1 + buyRate);
+        const riskPercent = lossPerShare / entry * 100;
+        const brokerRiskPercent = riskPerShare / (entry * (1 + buyRate)) * 100;
+        const grossRewardPerShare = target ? target - entry : 0;
+        const targetRewardPerShare = target ? (target - entry) - entry * buyRate - target * sellRate : 0;
+        const ratio = target ? targetRewardPerShare / riskPerShare : 0;
+
+        $("invalid-state").classList.remove("visible");
+        $("hero-note").classList.remove("warning");
+        $("lots").textContent = numberFormat.format(lots);
+        setText("lot-note", lots === 0
+          ? "Batas risiko terlalu kecil untuk membeli 1 lot."
+          : (loss > riskBudget ? "Periksa kembali batas risiko transaksi." : "Posisi sesuai dengan batas risiko kamu."));
+        setText("shares", numberFormat.format(shares) + " lembar");
+        setText("capital", rupiah(capitalWithBuyFee));
+        setText("capital-sub", feesEnabled ? "Termasuk estimasi biaya broker beli" : "Belum termasuk biaya beli");
+        setText("loss", "−" + rupiah(loss));
+        setText("loss-sub", feesEnabled ? "Termasuk estimasi biaya beli & jual" : "Jika stop loss terkena");
+        setText("risk-percent", decimalFormat.format(riskPercent) + "%");
+        setText("broker-risk-percent", decimalFormat.format(brokerRiskPercent) + "%");
+        setText("profit", target ? rupiah(grossRewardPerShare * shares) : "—");
+        setText("profit-sub", target ? "Jika harga mencapai target profit" : "Isi target profit untuk melihat estimasi.");
+        const netProfit = targetRewardPerShare * shares;
+        setText("broker-profit", target ? signedRupiah(netProfit) : "—");
+        $("broker-profit").classList.toggle("negative", target && netProfit < 0);
+        $("broker-profit").classList.toggle("positive", !target || netProfit >= 0);
+        if (target) {
+          setText("ratio", ratio > 0 ? "1 : " + decimalFormat.format(ratio) : "Tidak valid");
+          setText("ratio-help", ratio > 0
+            ? rupiah(Math.max(0, targetRewardPerShare * shares)) + " estimasi potensi profit bersih"
+            : "Biaya broker melebihi estimasi profit.");
+        } else {
+          setText("ratio", "—");
+          setText("ratio-help", "Isi harga target untuk melihat rasio.");
+        }
+      }
+
+      moneyInputs.forEach((input) => {
+        input.addEventListener("input", calculate);
+        input.addEventListener("blur", () => {
+          const value = parseMoney(input.value);
+          if (value) input.value = numberFormat.format(value);
+        });
+        input.addEventListener("focus", () => input.select());
+      });
+
+      feeInputs.forEach((input) => input.addEventListener("input", calculate));
+      $("fees-enabled").addEventListener("change", () => {
+        $("fee-fields").hidden = !$("fees-enabled").checked;
+        $("broker-risk-metric").hidden = !$("fees-enabled").checked;
+        $("broker-profit-metric").hidden = !$("fees-enabled").checked;
+        calculate();
+      });
+
+      $("reset").addEventListener("click", () => {
+        $("entry").value = "";
+        $("stop").value = "";
+        $("risk").value = "";
+        $("target").value = "";
+        $("fees-enabled").checked = false;
+        $("fee-fields").hidden = true;
+        $("buy-fee").value = "0,15";
+        $("sell-fee").value = "0,25";
+        calculate();
+        $("entry").focus();
+      });
+
+      calculate();
+    })();
+  </script>
+  <script>
+    if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch((error) => {
+          console.error("PWA offline support could not be enabled:", error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
