@@ -1,10 +1,10 @@
 {
-  "id": "./aplikasi-trading.html",
+  "id": "./lotwise-trading.html",
   "name": "Lotwise — Kalkulator Position Size",
   "short_name": "Lotwise",
   "description": "Kalkulator ukuran posisi dan risiko trading saham IDX.",
   "lang": "id-ID",
-  "start_url": "./aplikasi-trading.html",
+  "start_url": "./lotwise-trading.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
